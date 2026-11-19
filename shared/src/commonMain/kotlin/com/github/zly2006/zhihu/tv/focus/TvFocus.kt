@@ -88,6 +88,19 @@ private class TvFocusedActions(
 @Stable
 class TvFocusedActionHost {
     private var current: TvFocusedActions? = null
+    private var scrollTarget: Pair<Any, (TvAction) -> Boolean>? = null
+
+    /** 可滚动正文登记方向键处理，优先于焦点移动，避免方向键被根节点吞掉。 */
+    fun registerScroll(
+        owner: Any,
+        onScroll: (TvAction) -> Boolean,
+    ): () -> Unit {
+        val entry = owner to onScroll
+        scrollTarget = entry
+        return { if (scrollTarget === entry) scrollTarget = null }
+    }
+
+    fun performScroll(action: TvAction): Boolean = scrollTarget?.second?.invoke(action) == true
 
     fun register(
         owner: Any,

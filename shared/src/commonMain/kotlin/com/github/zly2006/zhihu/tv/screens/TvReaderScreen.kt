@@ -44,6 +44,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,6 +86,7 @@ import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.theme.DUO3_TIQIAN_MARKDOWN_PREFERENCE_KEY
 import com.github.zly2006.zhihu.tv.components.TvHint
 import com.github.zly2006.zhihu.tv.components.TvHints
+import com.github.zly2006.zhihu.tv.focus.LocalTvFocusedActionHost
 import com.github.zly2006.zhihu.tv.focus.TvFocusable
 import com.github.zly2006.zhihu.tv.focus.tvFocusSurface
 import com.github.zly2006.zhihu.tv.input.TvAction
@@ -494,7 +496,36 @@ private fun TvReaderFrame(
     val firstActionFocusRequester = remember { FocusRequester() }
     val bodyInteraction = remember { MutableInteractionSource() }
     val bodyFocused by bodyInteraction.collectIsFocusedAsState()
-    LaunchedEffect(Unit) { runCatching { bodyFocusRequester.requestFocus() } }
+    val actionHost = LocalTvFocusedActionHost.current
+    val scrollOwner = remember { Any() }
+    // 方向键先交给正文滚动，再考虑焦点移动；否则根节点会先把 Up/Down 当成焦点搜索消耗掉。
+    DisposableEffect(bodyFocused, actionHost, scrollOwner) {
+        if (!bodyFocused) return@DisposableEffect onDispose {}
+        val step = with(density) { 150.dp.toPx() }
+        val dispose = actionHost.registerScroll(scrollOwner) { action ->
+            when (action) {
+                TvAction.Up -> {
+                    scope.launch { scrollState.animateScrollBy(-step) }
+                    true
+                }
+
+                TvAction.Down -> {
+                    scope.launch { scrollState.animateScrollBy(step) }
+                    true
+                }
+
+                else -> {
+                    false
+                }
+            }
+        }
+        onDispose(dispose)
+    }
+    LaunchedEffect(Unit) {
+        // 等首帧完成组合，焦点目标挂上 FocusRequester 后再请求，否则会静默失败落到操作列。
+        withFrameNanos { }
+        runCatching { bodyFocusRequester.requestFocus() }
+    }
     TvHints(hints)
 
     Row(Modifier.fillMaxSize()) {

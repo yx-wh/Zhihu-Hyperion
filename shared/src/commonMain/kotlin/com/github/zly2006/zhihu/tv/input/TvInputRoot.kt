@@ -53,13 +53,14 @@ fun TvInputRoot(
     val focusManager = LocalFocusManager.current
     val focusedActionHost = remember { TvFocusedActionHost() }
 
+    fun moveFocus(action: TvAction): Boolean {
+        if (inputState.textEntryActive) return false
+        if (focusedActionHost.performScroll(action)) return true
+        return focusManager.moveFocus(action.toFocusDirectionOrNull() ?: return false)
+    }
+
     fun handle(action: TvAction) {
-        val direction = action.toFocusDirectionOrNull()
-        if (direction == null) {
-            onAction(action)
-        } else if (!inputState.textEntryActive) {
-            focusManager.moveFocus(direction)
-        }
+        if (action.isDirection) moveFocus(action) else onAction(action)
     }
 
     fun handleExternal(action: TvAction) {
@@ -82,9 +83,8 @@ fun TvInputRoot(
                 val action = event.toTvActionOrNull() ?: return@onPreviewKeyEvent false
                 val direction = action.toFocusDirectionOrNull()
                 if (direction != null) {
-                    // 文本输入时方向键属于光标移动，不能被根节点抢走。
-                    if (inputState.textEntryActive) return@onPreviewKeyEvent false
-                    focusManager.moveFocus(direction)
+                    // 文本输入时方向键属于光标移动，不能被根节点抢走；正文滚动优先于焦点移动。
+                    moveFocus(action)
                 } else {
                     onAction(action)
                 }
