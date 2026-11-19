@@ -69,6 +69,8 @@ import com.github.zly2006.zhihu.platform.androidUserMessageSink
 import com.github.zly2006.zhihu.reading.ContentReadingService
 import com.github.zly2006.zhihu.theme.AndroidThemeSettings
 import com.github.zly2006.zhihu.theme.ZhihuTheme
+import com.github.zly2006.zhihu.tv.TvZhihuApp
+import com.github.zly2006.zhihu.tv.rememberTvModeEnabled
 import com.github.zly2006.zhihu.ui.AndroidZhihuMain
 import com.github.zly2006.zhihu.ui.components.AppDialogAction
 import com.github.zly2006.zhihu.ui.components.AppDialogQueue
@@ -184,11 +186,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             navController = rememberNavController()
-            ZhihuTheme {
-                CompositionLocalProvider(LocalPageTurnDispatcher provides pageTurnDispatcher) {
-                    Box(Modifier.semantics { testTagsAsResourceId = true }) {
-                        AndroidZhihuMain(navController = navController)
-                        PageTurnFab(dispatcher = pageTurnDispatcher)
+            if (rememberTvModeEnabled()) {
+                TvZhihuApp()
+            } else {
+                ZhihuTheme {
+                    CompositionLocalProvider(LocalPageTurnDispatcher provides pageTurnDispatcher) {
+                        Box(Modifier.semantics { testTagsAsResourceId = true }) {
+                            AndroidZhihuMain(navController = navController)
+                            PageTurnFab(dispatcher = pageTurnDispatcher)
+                        }
                     }
                 }
             }

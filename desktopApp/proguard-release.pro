@@ -88,3 +88,9 @@
 -keepclasseswithmembernames class * {
     native <methods>;
 }
+
+# Jamepad 通过 JNI 调用随包分发的 SDL2（ControllerManager 的 native 方法和 gdx-jnigen 的 native 加载器），
+# 这些类名由 native 侧按名字查找，静态分析不可达；裁掉后 release 包启动时就无法加载手柄库。
+-keep class com.studiohartman.jamepad.** { *; }
+-keep class com.badlogic.gdx.jnigen.** { *; }
+-dontwarn com.badlogic.gdx.jnigen.**

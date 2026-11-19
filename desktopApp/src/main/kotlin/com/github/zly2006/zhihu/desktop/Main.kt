@@ -22,14 +22,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.github.zly2006.zhihu.desktopZhihuModules
+import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.SnackbarUserMessageHost
 import com.github.zly2006.zhihu.theme.ZhihuTheme
+import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.DesktopZhihuMain
 import org.koin.core.context.startKoin
+import org.koin.mp.KoinPlatform
 
-fun main() {
+private const val TV_MODE_ARGUMENT = "--tv"
+
+/**
+ * 桌面入口。
+ *
+ * `--tv` 让 HTPC / 接手柄的场景在启动时直接进入手柄模式，不必先打开普通界面到设置里切换。
+ */
+fun main(args: Array<String>) {
+    applyDesktopUiScale()
     System.setProperty("java.awt.im.style", "below-the-spot")
     startKoin { modules(desktopZhihuModules()) }
+    if (TV_MODE_ARGUMENT in args) {
+        KoinPlatform.getKoin().get<SettingsStore>().putBoolean(TV_MODE_PREFERENCE_KEY, true)
+    }
     application {
         Window(
             onCloseRequest = ::exitApplication,

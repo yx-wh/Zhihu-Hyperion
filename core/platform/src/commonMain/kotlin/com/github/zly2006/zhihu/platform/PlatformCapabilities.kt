@@ -56,6 +56,10 @@ expect val isAnswerSwipeSupported: Boolean
 /** 一级页面返回时回到桌面：只有 Android 的系统返回在应用不处理时会回到桌面，桌面端 ESC 和 iOS 没有这层语义。 */
 expect val isTopLevelBackToLauncherSupported: Boolean
 
+/** 电视形态设备（Android TV / 电视盒子）默认以手柄 / TV 界面启动，其他设备默认保持原有界面。 */
+@Composable
+expect fun rememberIsTelevisionUi(): Boolean
+
 enum class UserMessageDuration {
     Short,
     Long,

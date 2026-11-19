@@ -21,6 +21,7 @@ package com.github.zly2006.zhihu.platform
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
@@ -96,6 +97,15 @@ actual val isPageTurnSupported: Boolean = true
 actual val isAnswerSwipeSupported: Boolean = true
 
 actual val isTopLevelBackToLauncherSupported: Boolean = true
+
+@Composable
+actual fun rememberIsTelevisionUi(): Boolean {
+    val context = LocalContext.current
+    return remember(context) {
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
+            Configuration.UI_MODE_TYPE_TELEVISION
+    }
+}
 
 @Composable
 actual fun rememberSystemUrlOpener(): SystemUrlOpener {

@@ -52,6 +52,7 @@ public final class com/github/zly2006/zhihu/platform/JvmPlatformCapabilitiesKt {
 	public static final fun rememberImagePreviewOpener (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/ImagePreviewOpener;
 	public static final fun rememberImageSaver (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/ImageSaver;
 	public static final fun rememberImageSharer (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/ImageSharer;
+	public static final fun rememberIsTelevisionUi (Landroidx/compose/runtime/Composer;I)Z
 	public static final fun rememberPlainTextClipboard (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/PlainTextClipboard;
 	public static final fun rememberSystemUrlOpener (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/SystemUrlOpener;
 	public static final fun rememberUserMessageSink (Landroidx/compose/runtime/Composer;I)Lcom/github/zly2006/zhihu/platform/UserMessageSink;

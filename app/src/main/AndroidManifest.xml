@@ -5,6 +5,16 @@
     <uses-feature
             android:name="android.hardware.camera"
             android:required="false"/>
+    <!-- 电视与手柄模式：不是必需硬件，普通手机仍可安装；有 Leanback 的设备会显示电视启动入口。 -->
+    <uses-feature
+            android:name="android.software.leanback"
+            android:required="false"/>
+    <uses-feature
+            android:name="android.hardware.touchscreen"
+            android:required="false"/>
+    <uses-feature
+            android:name="android.hardware.gamepad"
+            android:required="false"/>
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -61,12 +71,14 @@
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
+                android:banner="@mipmap/ic_launcher"
                 android:theme="@style/Theme.Zhihu"
                 android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

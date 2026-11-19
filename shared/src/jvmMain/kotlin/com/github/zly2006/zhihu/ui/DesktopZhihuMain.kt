@@ -58,6 +58,9 @@ import com.github.zly2006.zhihu.navigation.TopLevelDestination
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.platformBottomBarItemLimit
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
+import com.github.zly2006.zhihu.tv.TvZhihuApp
+import com.github.zly2006.zhihu.tv.input.rememberDesktopGamepadActions
+import com.github.zly2006.zhihu.tv.rememberTvModeEnabled
 import com.github.zly2006.zhihu.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.subscreens.BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.subscreens.COLLECTION_DIRECT_BROWSE_PREFERENCE_KEY
@@ -81,6 +84,15 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun DesktopZhihuMain() {
+    // TV 设置页写入开关后会通知 observeKeyChanges，这里立即切换到对应界面。
+    if (rememberTvModeEnabled()) {
+        TvZhihuApp(
+            gamepadActions = rememberDesktopGamepadActions(),
+            onExitTvMode = {},
+        )
+        return
+    }
+
     /** 主返回栈控制器，承载 MainTabs 主壳和单栏页面。 */
     val navController = rememberNavController()
     val accountStore = koinInject<ZhihuAccountStore>()

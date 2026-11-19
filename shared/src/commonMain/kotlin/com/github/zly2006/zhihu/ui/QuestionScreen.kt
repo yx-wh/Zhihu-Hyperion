@@ -141,7 +141,7 @@ private val QUESTION_DETAIL_MASK_HEIGHT: Dp = 88.dp
 private val QUESTION_DETAIL_TOGGLE_ZONE_HEIGHT: Dp = 56.dp
 const val QUESTION_STATS_TAG = "question_stats"
 
-private suspend fun loadQuestion(
+internal suspend fun loadQuestion(
     environment: ZhihuApiEnvironment,
     history: HistoryStorage,
     contentOpens: ContentOpenTracker,

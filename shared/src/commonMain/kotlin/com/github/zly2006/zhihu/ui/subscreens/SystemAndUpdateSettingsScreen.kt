@@ -75,6 +75,8 @@ import com.github.zly2006.zhihu.platform.MACOS_QUIT_ON_WINDOW_CLOSE_PREFERENCE_K
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.platformName
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
+import com.github.zly2006.zhihu.platform.rememberIsTelevisionUi
+import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.ui.components.SettingItemWithSwitch
@@ -97,6 +99,7 @@ import zhihu.shared.generated.resources.ic_telegram_24dp
 
 internal const val CONTINUOUS_USAGE_REMINDER_INTERVAL_MINUTES_KEY = "continuousUsageReminderIntervalMinutes"
 const val SYSTEM_SETTINGS_AIGC_MARKING_TAG = "system_settings_aigc_marking"
+const val SYSTEM_SETTINGS_TV_MODE_TAG = "system_settings_tv_mode"
 
 /**
  * 系统、更新和外部服务设置页。
@@ -343,6 +346,26 @@ fun SystemAndUpdateSettingsScreen(
                         settings.putBoolean(AIGC_MARKING_ENABLED_PREFERENCE_KEY, it)
                     },
                     settingKey = AIGC_MARKING_ENABLED_PREFERENCE_KEY,
+                    highlightedKey = highlightedSetting,
+                )
+
+                val televisionUi = rememberIsTelevisionUi()
+                var tvModeEnabled by remember {
+                    mutableStateOf(settings.getBoolean(TV_MODE_PREFERENCE_KEY, televisionUi))
+                }
+                SettingItemWithSwitch(
+                    modifier = Modifier.testTag(SYSTEM_SETTINGS_TV_MODE_TAG),
+                    title = { Text("手柄 / TV 模式") },
+                    icon = { Icon(AppIcons.Keyboard, contentDescription = null) },
+                    description = {
+                        Text("用方向键移动焦点，A 确认、B 返回、L/R 切换栏目。电视设备默认开启；桌面端开启后需要重启应用。")
+                    },
+                    checked = tvModeEnabled,
+                    onCheckedChange = {
+                        tvModeEnabled = it
+                        settings.putBoolean(TV_MODE_PREFERENCE_KEY, it)
+                    },
+                    settingKey = TV_MODE_PREFERENCE_KEY,
                     highlightedKey = highlightedSetting,
                 )
             }

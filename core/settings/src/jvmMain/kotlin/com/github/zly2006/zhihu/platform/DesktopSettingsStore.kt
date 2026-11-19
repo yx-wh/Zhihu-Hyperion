@@ -84,9 +84,17 @@ fun desktopSettingsStore(file: File): SettingsStore {
 
         override fun contains(key: String) = properties.containsKey(key)
 
+        private val keyChangeListeners = mutableListOf<(String) -> Unit>()
+
+        override fun observeKeyChanges(onChanged: (String) -> Unit): AutoCloseable {
+            keyChangeListeners += onChanged
+            return AutoCloseable { keyChangeListeners -= onChanged }
+        }
+
         private fun write(key: String, value: String) {
             properties.setProperty(key, value)
             propertiesFile.save()
+            keyChangeListeners.toList().forEach { it(key) }
         }
     }
 }

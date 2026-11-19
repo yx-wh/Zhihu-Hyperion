@@ -72,6 +72,8 @@ coil = "3.6.3"
 hanlp = "portable-1.8.6"
 # Desktop runtime is linked from JDK 17; JavaFX 22+ requires a newer JDK, so stay on the 21 LTS line.
 javafx = "21.0.12"
+# Apache-2.0 SDL2 wrapper; the jar bundles Linux/Windows/macOS natives that are extracted at runtime.
+jamepad = "2.30.0.0"
 jsoup = "1.23.2"
 junit4 = "4.13.2"
 kermit = "2.2.0"
@@ -163,6 +165,9 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# ---- Desktop input ----
+jamepad = { module = "com.badlogicgames.jamepad:jamepad", version.ref = "jamepad" }
 
 # ---- Images and visual effects ----
 backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }

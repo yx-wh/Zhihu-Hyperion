@@ -176,7 +176,7 @@ private suspend fun submitPinPollVote(
     }
 }
 
-private suspend fun loadPinDetail(
+internal suspend fun loadPinDetail(
     environment: ZhihuApiEnvironment,
     history: HistoryStorage,
     contentOpens: ContentOpenTracker,

@@ -31,23 +31,34 @@ import com.materialkolor.dynamiccolor.ColorSpec
  * 应用的 Material 3 Expressive 主题：弹簧物理的 expressive 动效、Expressive 形状尺度与强调字体样式都来自
  * [MaterialExpressiveTheme] 的默认值。平台提供壁纸取色时用它，否则（关闭动态取色、桌面、macOS、Android 12 以下）
  * 用主题色按 2025 版配色规范生成配色，与 Android 16 的 Expressive 配色一致。
+ *
+ * [darkThemeOverride] 供十英尺界面的手柄 / TV 模式强制深色：此时不采用用户自定义背景和动态取色，
+ * 避免浅色背景下焦点环与文字对比度不足；普通界面保持传 null 以完全沿用用户主题设置。
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ZhihuTheme(
+    darkThemeOverride: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
-    val darkTheme = ThemeManager.isDarkTheme()
+    val darkTheme = darkThemeOverride ?: ThemeManager.isDarkTheme()
     val seedColor = ThemeManager.getCustomColor()
-    val platformColorScheme = if (ThemeManager.getUseDynamicColor()) platformDynamicColorScheme(darkTheme) else null
+    val platformColorScheme = if (darkThemeOverride == null && ThemeManager.getUseDynamicColor()) {
+        platformDynamicColorScheme(darkTheme)
+    } else {
+        null
+    }
     val seededColorScheme = remember(seedColor, darkTheme) {
         dynamicColorScheme(seedColor = seedColor, isDark = darkTheme, specVersion = ColorSpec.SpecVersion.SPEC_2025)
     }
-    val customBackgroundColor = ThemeManager.getBackgroundColor()
-    val colorScheme = (platformColorScheme ?: seededColorScheme).copy(
-        background = customBackgroundColor,
-        surface = customBackgroundColor,
-    )
+    val customBackgroundColor = if (darkThemeOverride == null) ThemeManager.getBackgroundColor() else null
+    val colorScheme = (platformColorScheme ?: seededColorScheme).let { scheme ->
+        if (customBackgroundColor != null) {
+            scheme.copy(background = customBackgroundColor, surface = customBackgroundColor)
+        } else {
+            scheme
+        }
+    }
 
     PlatformSystemBarEffect(darkTheme)
 

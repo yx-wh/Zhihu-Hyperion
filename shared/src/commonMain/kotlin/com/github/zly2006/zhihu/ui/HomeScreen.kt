@@ -204,6 +204,24 @@ internal class HomeScreenState(
 }
 
 /**
+ * 按当前推荐模式创建首页信息流 ViewModel。
+ *
+ * 首页与手柄 / TV 模式的信息流共用这段选择逻辑，避免推荐模式分支在两个入口之间分叉；新增推荐模式时只改这里。
+ */
+@Composable
+internal fun rememberHomeFeedViewModel(mode: RecommendationMode): BaseFeedViewModel {
+    val settings = koinInject<SettingsStore>()
+    val homeFeedFilter = koinInject<HomeFeedFilter>()
+    val mobileClient = koinInject<MobileClientProvider>()
+    return when (mode) {
+        RecommendationMode.WEB -> viewModel { HomeFeedViewModel(settings, homeFeedFilter) }
+        RecommendationMode.ANDROID -> viewModel { AndroidHomeFeedViewModel(settings, homeFeedFilter, mobileClient) }
+        RecommendationMode.LOCAL -> viewModel { LocalHomeFeedViewModel(settings, KoinPlatform.getKoin().inject()) }
+        RecommendationMode.MIXED -> viewModel { MixedHomeFeedViewModel(settings, homeFeedFilter, mobileClient) }
+    }
+}
+
+/**
  * 首页信息流页面。
  *
  * 页面顶部承载搜索、通知、账号入口等高频操作，主体是可分页的推荐信息流，底部可按设置显示可拖动刷新 FAB。
@@ -224,7 +242,6 @@ fun HomeScreen(
     val paginationEnvironment = rememberZhihuApiEnvironment(allowGuestAccess = true)
     val settings = koinInject<SettingsStore>()
     val remoteHistory = koinInject<RemoteHistorySync>()
-    val homeFeedFilter = koinInject<HomeFeedFilter>()
     val database = koinInject<ContentFilterDatabase>()
     val notInterestedDao = remember(database) { database.notInterestedContentDao() }
     val homeState: HomeScreenState = viewModel { HomeScreenState(notInterestedDao) }
@@ -286,12 +303,7 @@ fun HomeScreen(
     val updateState by koinInject<UpdateController>().state.collectAsState()
     val updateAnnouncement = (updateState as? UpdateState.Available)?.update
     val isDebuggable = rememberHomeIsDebuggable()
-    val viewModel: BaseFeedViewModel = when (currentRecommendationMode) {
-        RecommendationMode.WEB -> viewModel { HomeFeedViewModel(settings, homeFeedFilter) }
-        RecommendationMode.ANDROID -> viewModel { AndroidHomeFeedViewModel(settings, homeFeedFilter, mobileClient) }
-        RecommendationMode.LOCAL -> viewModel { LocalHomeFeedViewModel(settings, KoinPlatform.getKoin().inject()) }
-        RecommendationMode.MIXED -> viewModel { MixedHomeFeedViewModel(settings, homeFeedFilter, mobileClient) }
-    }
+    val viewModel: BaseFeedViewModel = rememberHomeFeedViewModel(currentRecommendationMode)
     val localHomeViewModel = viewModel as? LocalHomeFeedViewModel
     if (localHomeViewModel?.showDatabaseError == true) {
         AlertDialog(

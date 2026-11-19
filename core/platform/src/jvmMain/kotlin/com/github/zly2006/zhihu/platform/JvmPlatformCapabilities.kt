@@ -191,3 +191,6 @@ actual val isPageTurnSupported: Boolean = false
 actual val isAnswerSwipeSupported: Boolean = false
 
 actual val isTopLevelBackToLauncherSupported: Boolean = false
+
+@Composable
+actual fun rememberIsTelevisionUi(): Boolean = false

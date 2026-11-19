@@ -65,6 +65,7 @@ import com.github.zly2006.zhihu.platform.isPageTurnSupported
 import com.github.zly2006.zhihu.platform.isTopLevelBackToLauncherSupported
 import com.github.zly2006.zhihu.platform.platformName
 import com.github.zly2006.zhihu.theme.isDynamicColorSupported
+import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.article.ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.article.ARTICLE_USE_WEBVIEW_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.DISABLE_BOTTOM_SHEET_ROUNDED_CORNERS_PREFERENCE_KEY
@@ -283,6 +284,7 @@ private val settingsSearchEntries = buildList {
     add(systemEntry("system.githubAcceleration", "GitHub 加速", "通过 gh-proxy.com 检查和下载更新。", GITHUB_ACCELERATION_PREFERENCE_KEY, listOf("gh-proxy", "代理", "更新检查")))
     add(systemEntry("system.checkNightlyUpdates", "检查 Nightly 版本更新", "检查每日构建版本。", CHECK_NIGHTLY_UPDATES_PREFERENCE_KEY, listOf("每日构建")))
     add(systemEntry("system.aigcMarking", "启用 AIGC 标记", "开启后可查看其他用户对内容是否疑似 AIGC 的标记。", AIGC_MARKING_ENABLED_PREFERENCE_KEY, listOf("AI", "AIGC")))
+    add(systemEntry("system.tvMode", "手柄 / TV 模式", "用方向键移动焦点，A 确认、B 返回、L/R 切换栏目。", TV_MODE_PREFERENCE_KEY, listOf("手柄", "电视", "焦点", "TV")))
     add(systemEntry("system.reminder", "防沉迷提醒", "设置连续使用提醒的间隔。", CONTINUOUS_USAGE_REMINDER_INTERVAL_MINUTES_KEY, listOf("连续使用", "休息提醒")))
     add(
         SettingsSearchEntry(

@@ -19,6 +19,9 @@
 pluginManagement {
     includeBuild("build-logic")
     repositories {
+        // 国内网络下 Gradle Plugin Portal / Maven Central 经常握手失败，镜像只作为优先源，官方源保留兜底。
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
+        maven("https://maven.aliyun.com/repository/public")
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
@@ -40,6 +43,14 @@ buildCache {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        maven("https://maven.aliyun.com/repository/public")
+        maven("https://maven.aliyun.com/repository/google") {
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")

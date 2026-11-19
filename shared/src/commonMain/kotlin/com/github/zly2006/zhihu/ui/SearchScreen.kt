@@ -132,7 +132,7 @@ import kotlinx.serialization.json.JsonArray
 import org.koin.compose.koinInject
 
 @Serializable
-private data class HotSearchItem(
+internal data class HotSearchItem(
     val query: String,
     val hotShow: String = "",
     val label: String = "",
@@ -141,18 +141,25 @@ private data class HotSearchItem(
 private const val SEARCH_HISTORY_KEY = "searchHistoryQueries"
 private const val SEARCH_HISTORY_MAX_SIZE = 20
 
-private fun loadSearchHistory(settings: SettingsStore): List<String> =
+internal fun loadSearchHistory(settings: SettingsStore): List<String> =
     settings
         .getStringOrNull(SEARCH_HISTORY_KEY)
         ?.let { json ->
             runCatching { ZhihuJson.json.decodeFromString<List<String>>(json) }.getOrNull()
         }.orEmpty()
 
-private fun saveSearchHistory(
+internal fun saveSearchHistory(
     settings: SettingsStore,
     history: List<String>,
 ) {
     settings.putString(SEARCH_HISTORY_KEY, ZhihuJson.json.encodeToString(history))
+}
+
+/** 热搜词由首页搜索框与 TV 搜索页共用；接口返回结构只在手机端维护一份。 */
+internal suspend fun fetchHotSearchItems(environment: ZhihuApiEnvironment): List<HotSearchItem> {
+    val json = environment.fetchJson(ZHIHU_HOT_SEARCH_URL, "") ?: return emptyList()
+    val queries = json["hot_search_queries"] as? JsonArray ?: return emptyList()
+    return queries.take(15).map { ZhihuJson.decodeJson(it) }
 }
 
 /**
@@ -236,12 +243,10 @@ fun SearchScreen(
     }
 
     suspend fun fetchHotSearch() {
-        val json = paginationEnvironment.fetchJson(ZHIHU_HOT_SEARCH_URL, "") ?: return
-        val queries = json["hot_search_queries"] as? JsonArray ?: return
+        val items = fetchHotSearchItems(paginationEnvironment)
+        if (items.isEmpty()) return
         hotSearchItems.clear()
-        queries.take(15).forEach { item ->
-            hotSearchItems.add(ZhihuJson.decodeJson(item))
-        }
+        hotSearchItems.addAll(items)
     }
 
     val suggestItems = remember { mutableStateListOf<SearchSuggestItem>() }

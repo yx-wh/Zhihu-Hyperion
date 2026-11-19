@@ -24,7 +24,7 @@ public final class com/github/zly2006/zhihu/theme/ContentTypographyPreferencesKt
 }
 
 public final class com/github/zly2006/zhihu/theme/ThemeKt {
-	public static final fun ZhihuTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ZhihuTheme (Ljava/lang/Boolean;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class com/github/zly2006/zhihu/theme/ThemeManager {

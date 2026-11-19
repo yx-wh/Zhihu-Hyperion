@@ -126,6 +126,8 @@ kotlin {
             resources.srcDir("src/androidMain/assets")
             resources.srcDir(desktopEmojiResources)
             dependencies {
+                // TV 模式在桌面端轮询手柄；jar 内自带各平台 SDL2 native，运行时解压加载。
+                implementation(libs.jamepad)
                 implementation(libs.compose.ui.backhandler)
                 implementation(libs.androidx.navigationevent)
                 implementation(libs.coil.network.ktor3)
