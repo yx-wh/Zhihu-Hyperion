@@ -147,6 +147,7 @@ fun TvFeedScreen(
     var restoreFocusKey by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingFocusIndex by remember { mutableStateOf<Int?>(null) }
     val pendingFocusRequester = remember { FocusRequester() }
+    val emptyActionRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         if (viewModel.displayItems.isEmpty() && !viewModel.isLoading && !viewModel.isEnd) {
@@ -177,6 +178,13 @@ fun TvFeedScreen(
         runCatching { pendingFocusRequester.requestFocus() }
         pendingFocusIndex = null
         onInitialFocusRequested()
+    }
+    // 空信息流也必须给手柄一个焦点目标，否则进入关注/热榜后会停在没有焦点的状态。
+    LaunchedEffect(items.isEmpty(), viewModel.isLoading, viewModel.errorMessage) {
+        if (items.isEmpty() && !viewModel.isLoading) {
+            withFrameNanos { }
+            runCatching { emptyActionRequester.requestFocus() }
+        }
     }
 
     TvHints(
@@ -210,7 +218,11 @@ fun TvFeedScreen(
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val columns = (maxWidth / 500.dp).toInt().coerceIn(2, 4)
             if (items.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = when {
                             viewModel.errorMessage != null -> "加载失败：${viewModel.errorMessage}"
@@ -219,6 +231,13 @@ fun TvFeedScreen(
                         },
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    TvActionPill(
+                        text = "刷新",
+                        icon = AppIcons.Refresh,
+                        focusRequester = emptyActionRequester,
+                        onClick = { viewModel.refresh(environment) },
                     )
                 }
             } else {
