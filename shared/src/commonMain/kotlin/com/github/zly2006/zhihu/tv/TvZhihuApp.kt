@@ -61,6 +61,9 @@ import com.github.zly2006.zhihu.tv.screens.TvFeedKind
 import com.github.zly2006.zhihu.tv.screens.TvFeedScreen
 import com.github.zly2006.zhihu.ui.rememberAccountSettingsAccountState
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 private enum class TvTab(
     val title: String,
@@ -98,6 +101,7 @@ fun TvZhihuApp(
 
         val tabFocusRequesters = remember { TvTab.entries.associateWith { FocusRequester() } }
         var pendingTabFocus by remember { mutableStateOf<TvTab?>(null) }
+        var lastBackMark by remember { mutableStateOf<TimeMark?>(null) }
         val actionFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
 
         // 切栏后内容与侧栏会重组，必须等新焦点项挂上 requester 再请求，否则会静默失败导致整个界面无焦点。
@@ -142,6 +146,10 @@ fun TvZhihuApp(
         fun handleAction(action: TvAction): Boolean {
             return when (action) {
                 TvAction.Back -> {
+                    // 手柄和键盘可能同时上报同一次返回；300ms 内只允许弹一层，避免从详情直接跳过搜索页。
+                    val previous = lastBackMark
+                    if (previous != null && previous.elapsedNow() < 300.milliseconds) return true
+                    lastBackMark = TimeSource.Monotonic.markNow()
                     navController.popBackStack()
                 }
 

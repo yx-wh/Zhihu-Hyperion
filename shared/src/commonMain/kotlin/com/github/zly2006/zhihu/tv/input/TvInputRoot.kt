@@ -34,6 +34,24 @@ import com.github.zly2006.zhihu.tv.focus.LocalTvFocusedActionHost
 import com.github.zly2006.zhihu.tv.focus.TvFocusedActionHost
 import com.github.zly2006.zhihu.tv.focus.TvInputState
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+private class ActionThrottle {
+    private var lastAction: TvAction? = null
+    private var lastMark: TimeMark? = null
+
+    /** 两个手柄可能同时上报同一次按键；120ms 内的同动作只处理一次。 */
+    fun accept(action: TvAction): Boolean {
+        val mark = TimeSource.Monotonic.markNow()
+        val previous = lastMark
+        if (action == lastAction && previous != null && previous.elapsedNow() < 120.milliseconds) return false
+        lastAction = action
+        lastMark = mark
+        return true
+    }
+}
 
 /**
  * TV 模式的根输入。
@@ -54,6 +72,7 @@ fun TvInputRoot(
 ) {
     val focusManager = LocalFocusManager.current
     val focusedActionHost = remember { TvFocusedActionHost() }
+    val actionThrottle = remember { ActionThrottle() }
     // 手柄动作流在 LaunchedEffect 中长期收集，必须读取最新回调，否则会一直用首次组合时的 selectedTab / 返回栈。
     val currentOnAction by rememberUpdatedState(onAction)
 
@@ -75,6 +94,7 @@ fun TvInputRoot(
     }
 
     fun handleExternal(action: TvAction) {
+        if (!actionThrottle.accept(action)) return
         when (action) {
             TvAction.Confirm -> if (!focusedActionHost.performConfirm()) currentOnAction(action)
             TvAction.Secondary -> if (!focusedActionHost.performSecondary()) currentOnAction(action)
