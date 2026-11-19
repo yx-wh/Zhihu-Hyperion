@@ -315,11 +315,53 @@ private fun TvQuestionReader(
     }
 
     val listState = rememberLazyListState()
-    val firstAnswerRequester = remember { FocusRequester() }
+    val answerFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
     val fallbackActionRequester = remember { FocusRequester() }
-    // 详情加载失败或没有回答时，列表没有焦点目标；先聚焦操作列，保证 B 仍能返回。
+    val bodyRequester = remember { FocusRequester() }
+    val bodyInteraction = remember { MutableInteractionSource() }
+    val bodyFocused by bodyInteraction.collectIsFocusedAsState()
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val actionHost = LocalTvFocusedActionHost.current
+    val scrollOwner = remember { Any() }
+    DisposableEffect(bodyFocused, actionHost) {
+        if (!bodyFocused) return@DisposableEffect onDispose {}
+        val step = with(density) { 150.dp.toPx() }
+        val dispose = actionHost.registerScroll(scrollOwner) { action ->
+            when (action) {
+                TvAction.Up -> {
+                    if (!listState.canScrollBackward) return@registerScroll false
+                    scope.launch { listState.animateScrollBy(-step) }
+                    true
+                }
+
+                TvAction.Down -> {
+                    if (listState.canScrollForward) {
+                        scope.launch { listState.animateScrollBy(step) }
+                        true
+                    } else {
+                        // 长图滚到底后，把焦点交给当前可见的第一条回答；不能再用可能已被回收的第一条 requester。
+                        val key = listState.layoutInfo.visibleItemsInfo
+                            .firstOrNull { it.key is String && answerFocusRequesters.containsKey(it.key) }
+                            ?.key as? String
+                        val requester = key?.let(answerFocusRequesters::get) ?: return@registerScroll false
+                        runCatching { requester.requestFocus() }.isSuccess
+                    }
+                }
+
+                else -> {
+                    false
+                }
+            }
+        }
+        onDispose(dispose)
+    }
+    // 详情加载失败或没有回答时，先聚焦问题正文；这样长图可以滚动，B 也有焦点目标。
     LaunchedEffect(Unit) {
-        withFrameNanos { }
+        repeat(3) {
+            withFrameNanos { }
+            if (runCatching { bodyRequester.requestFocus() }.isSuccess) return@LaunchedEffect
+        }
         runCatching { fallbackActionRequester.requestFocus() }
     }
     val useTiqian = settings.getBoolean(DUO3_TIQIAN_MARKDOWN_PREFERENCE_KEY, false)
@@ -331,7 +373,15 @@ private fun TvQuestionReader(
     Row(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .focusRequester(bodyRequester)
+                .focusProperties {
+                    up = FocusRequester.Cancel
+                    left = FocusRequester.Cancel
+                    right = fallbackActionRequester
+                }.focusable(interactionSource = bodyInteraction),
             contentPadding = androidx.compose.foundation.layout
                 .PaddingValues(bottom = 32.dp),
         ) {
@@ -370,15 +420,9 @@ private fun TvQuestionReader(
                     authorName = item.authorName.orEmpty(),
                     excerpt = item.summary.orEmpty(),
                     details = item.details,
-                    focusRequester = if (index == 0) firstAnswerRequester else null,
+                    focusRequester = answerFocusRequesters.getOrPut(item.stableKey) { FocusRequester() },
                     onClick = { item.navDestination?.let { navigator.onNavigate(it) } },
                 )
-            }
-        }
-        LaunchedEffect(viewModel.displayItems.isNotEmpty()) {
-            if (viewModel.displayItems.isNotEmpty()) {
-                withFrameNanos { }
-                runCatching { firstAnswerRequester.requestFocus() }
             }
         }
         TvReaderActionColumn(
@@ -387,7 +431,7 @@ private fun TvQuestionReader(
                 TvReaderAction(AppIcons.Refresh, "刷新") { viewModel.refresh(environment) },
             ),
             firstFocusRequester = fallbackActionRequester,
-            bodyFocusRequester = firstAnswerRequester,
+            bodyFocusRequester = bodyRequester,
             modifier = Modifier.fillMaxHeight().width(96.dp),
         )
     }
