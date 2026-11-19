@@ -59,6 +59,7 @@ import com.github.zly2006.zhihu.tv.input.TvAction
 import com.github.zly2006.zhihu.tv.input.TvInputRoot
 import com.github.zly2006.zhihu.tv.screens.TvFeedKind
 import com.github.zly2006.zhihu.tv.screens.TvFeedScreen
+import com.github.zly2006.zhihu.tv.screens.TvFollowScreen
 import com.github.zly2006.zhihu.ui.rememberAccountSettingsAccountState
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration.Companion.milliseconds
@@ -287,11 +288,15 @@ fun TvZhihuApp(
                                 onOpenLogin = { openRoute(Login) },
                                 rootContent = {
                                     when (selectedTab) {
-                                        TvTab.Home, TvTab.Follow, TvTab.Hot -> {
+                                        TvTab.Follow -> {
+                                            TvFollowScreen()
+                                        }
+
+                                        TvTab.Home, TvTab.Hot -> {
                                             val kind = when (selectedTab) {
                                                 TvTab.Home -> TvFeedKind.Home
-                                                TvTab.Follow -> TvFeedKind.Follow
                                                 TvTab.Hot -> TvFeedKind.Hot
+                                                else -> error("unreachable")
                                             }
                                             TvFeedScreen(
                                                 kind = kind,

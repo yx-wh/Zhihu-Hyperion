@@ -36,6 +36,7 @@ import com.github.zly2006.zhihu.navigation.ArticleType
 import com.github.zly2006.zhihu.navigation.ArticleTypeNavType
 import com.github.zly2006.zhihu.navigation.CollectionContent
 import com.github.zly2006.zhihu.navigation.Collections
+import com.github.zly2006.zhihu.navigation.FollowUserUpdates
 import com.github.zly2006.zhihu.navigation.Login
 import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.navigation.Notification
@@ -51,6 +52,7 @@ import com.github.zly2006.zhihu.tv.screens.TvNotificationScreen
 import com.github.zly2006.zhihu.tv.screens.TvReaderScreen
 import com.github.zly2006.zhihu.tv.screens.TvSearchScreen
 import com.github.zly2006.zhihu.tv.screens.TvSettingsScreen
+import com.github.zly2006.zhihu.tv.screens.TvUserUpdatesScreen
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.reflect.typeOf
@@ -117,6 +119,9 @@ internal fun TvNavHost(
         }
         composable<Pin> { entry ->
             TvReaderScreen(entry.toRoute<Pin>(), onOpenComments = ::openComments)
+        }
+        composable<FollowUserUpdates> { entry ->
+            TvUserUpdatesScreen(entry.toRoute<FollowUserUpdates>())
         }
         composable<Search> { TvSearchScreen() }
         composable<Login> { TvLoginScreen() }

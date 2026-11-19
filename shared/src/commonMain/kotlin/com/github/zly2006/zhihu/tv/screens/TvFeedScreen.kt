@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -110,6 +111,10 @@ fun TvFeedScreen(
     onOpenSearch: () -> Unit,
     requestInitialFocus: Boolean,
     onInitialFocusRequested: () -> Unit,
+    title: String = kind.title,
+    showHeader: Boolean = true,
+    viewModelOverride: BaseFeedViewModel? = null,
+    topContent: (@Composable () -> Unit)? = null,
 ) {
     val settings = koinInject<SettingsStore>()
     val environment = rememberZhihuApiEnvironment(allowGuestAccess = true)
@@ -119,7 +124,7 @@ fun TvFeedScreen(
         RecommendationMode.entries.find { it.key == settings.getString("recommendationMode", RecommendationMode.MIXED.key) }
             ?: RecommendationMode.MIXED
     }
-    val viewModel: BaseFeedViewModel = when (kind) {
+    val viewModel: BaseFeedViewModel = viewModelOverride ?: when (kind) {
         TvFeedKind.Home -> rememberHomeFeedViewModel(mode)
         TvFeedKind.Follow -> viewModel { FollowViewModel(settings) }
         TvFeedKind.Hot -> viewModel { HotListViewModel(settings) }
@@ -196,23 +201,25 @@ fun TvFeedScreen(
     )
 
     Column(Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 40.dp, end = 40.dp, top = 28.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = kind.title,
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.width(24.dp))
-            if (viewModel.isLoading) {
-                AppLoadingIndicator()
+        if (showHeader) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp, end = 40.dp, top = 28.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Spacer(Modifier.width(24.dp))
+                if (viewModel.isLoading) {
+                    AppLoadingIndicator()
+                }
+                Spacer(Modifier.weight(1f))
+                TvActionPill(text = "搜索", icon = AppIcons.Search, onClick = onOpenSearch)
             }
-            Spacer(Modifier.weight(1f))
-            TvActionPill(text = "搜索", icon = AppIcons.Search, onClick = onOpenSearch)
         }
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -248,6 +255,9 @@ fun TvFeedScreen(
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
+                    if (topContent != null) {
+                        item(span = { GridItemSpan(maxLineSpan) }) { topContent() }
+                    }
                     itemsIndexed(items, key = { _, item -> item.stableKey }) { index, item ->
                         TvFeedCard(
                             item = item,
