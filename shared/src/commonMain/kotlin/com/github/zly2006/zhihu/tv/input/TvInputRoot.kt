@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -52,6 +54,8 @@ fun TvInputRoot(
 ) {
     val focusManager = LocalFocusManager.current
     val focusedActionHost = remember { TvFocusedActionHost() }
+    // 手柄动作流在 LaunchedEffect 中长期收集，必须读取最新回调，否则会一直用首次组合时的 selectedTab / 返回栈。
+    val currentOnAction by rememberUpdatedState(onAction)
 
     fun moveFocus(action: TvAction): Boolean {
         if (inputState.textEntryActive) return false
@@ -59,14 +63,21 @@ fun TvInputRoot(
         return focusManager.moveFocus(action.toFocusDirectionOrNull() ?: return false)
     }
 
+    fun performContentAction(action: TvAction): Boolean =
+        focusedActionHost.performContentAction(action) || currentOnAction(action)
+
     fun handle(action: TvAction) {
-        if (action.isDirection) moveFocus(action) else onAction(action)
+        when {
+            action.isDirection -> moveFocus(action)
+            action == TvAction.PreviousItem || action == TvAction.NextItem -> performContentAction(action)
+            else -> currentOnAction(action)
+        }
     }
 
     fun handleExternal(action: TvAction) {
         when (action) {
-            TvAction.Confirm -> if (!focusedActionHost.performConfirm()) onAction(action)
-            TvAction.Secondary -> if (!focusedActionHost.performSecondary()) onAction(action)
+            TvAction.Confirm -> if (!focusedActionHost.performConfirm()) currentOnAction(action)
+            TvAction.Secondary -> if (!focusedActionHost.performSecondary()) currentOnAction(action)
             else -> handle(action)
         }
     }
@@ -85,8 +96,10 @@ fun TvInputRoot(
                 if (direction != null) {
                     // 文本输入时方向键属于光标移动，不能被根节点抢走；正文滚动优先于焦点移动。
                     moveFocus(action)
+                } else if (action == TvAction.PreviousItem || action == TvAction.NextItem) {
+                    performContentAction(action)
                 } else {
-                    onAction(action)
+                    currentOnAction(action)
                 }
             },
     ) {

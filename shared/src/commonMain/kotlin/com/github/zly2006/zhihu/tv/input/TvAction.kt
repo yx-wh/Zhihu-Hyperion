@@ -39,6 +39,10 @@ enum class TvAction {
     PrevTab,
     NextTab,
 
+    /** L2 / R2 或阅读页的“上一篇 / 下一篇”，由当前页面决定是否有内容可切换。 */
+    PreviousItem,
+    NextItem,
+
     /** X / Y 等肩键外的次要动作，例如阅读页的赞同。 */
     Secondary,
     ;
@@ -70,8 +74,10 @@ fun KeyEvent.toTvActionOrNull(): TvAction? = when (key) {
     Key.Enter, Key.NumPadEnter, Key.DirectionCenter, Key.Spacebar, Key.ButtonA -> TvAction.Confirm
     Key.Escape, Key.ButtonB -> TvAction.Back
     Key.Menu, Key.ButtonStart -> TvAction.Menu
-    Key.PageUp, Key.NumPadPageUp, Key.ButtonL1, Key.ButtonL2 -> TvAction.PrevTab
-    Key.PageDown, Key.NumPadPageDown, Key.ButtonR1, Key.ButtonR2 -> TvAction.NextTab
+    Key.PageUp, Key.NumPadPageUp, Key.ButtonL1 -> TvAction.PrevTab
+    Key.PageDown, Key.NumPadPageDown, Key.ButtonR1 -> TvAction.NextTab
+    Key.ButtonL2 -> TvAction.PreviousItem
+    Key.ButtonR2 -> TvAction.NextItem
     Key.ButtonX, Key.ButtonY -> TvAction.Secondary
     else -> null
 }

@@ -60,12 +60,14 @@ class TvActionMappingTest {
         assertEquals(TvAction.Back, actionOf(Key.ButtonB))
         assertEquals(TvAction.Menu, actionOf(Key.Menu))
         assertEquals(TvAction.Menu, actionOf(Key.ButtonStart))
-        listOf(Key.PageUp, Key.NumPadPageUp, Key.ButtonL1, Key.ButtonL2).forEach {
+        listOf(Key.PageUp, Key.NumPadPageUp, Key.ButtonL1).forEach {
             assertEquals(TvAction.PrevTab, actionOf(it), "按键 $it 应映射为上一栏")
         }
-        listOf(Key.PageDown, Key.NumPadPageDown, Key.ButtonR1, Key.ButtonR2).forEach {
+        listOf(Key.PageDown, Key.NumPadPageDown, Key.ButtonR1).forEach {
             assertEquals(TvAction.NextTab, actionOf(it), "按键 $it 应映射为下一栏")
         }
+        assertEquals(TvAction.PreviousItem, actionOf(Key.ButtonL2))
+        assertEquals(TvAction.NextItem, actionOf(Key.ButtonR2))
     }
 
     @Test
@@ -87,7 +89,15 @@ class TvActionMappingTest {
         assertEquals(FocusDirection.Down, TvAction.Down.toFocusDirectionOrNull())
         assertEquals(FocusDirection.Left, TvAction.Left.toFocusDirectionOrNull())
         assertEquals(FocusDirection.Right, TvAction.Right.toFocusDirectionOrNull())
-        listOf(TvAction.Confirm, TvAction.Back, TvAction.Menu, TvAction.PrevTab, TvAction.NextTab, TvAction.Secondary)
-            .forEach { assertNull(it.toFocusDirectionOrNull(), "$it 不是方向动作") }
+        listOf(
+            TvAction.Confirm,
+            TvAction.Back,
+            TvAction.Menu,
+            TvAction.PrevTab,
+            TvAction.NextTab,
+            TvAction.PreviousItem,
+            TvAction.NextItem,
+            TvAction.Secondary,
+        ).forEach { assertNull(it.toFocusDirectionOrNull(), "$it 不是方向动作") }
     }
 }

@@ -18,6 +18,7 @@
 | 确认 | A | Enter / Space |
 | 返回上一级 | B | Esc |
 | 切换栏目 | L1 / R1 | PageUp / PageDown |
+| 上一篇 / 下一篇（仅回答详情） | L2 / R2 | — |
 | 打开设置 | Start | Menu |
 | 次要动作（保留） | X / Y | — |
 

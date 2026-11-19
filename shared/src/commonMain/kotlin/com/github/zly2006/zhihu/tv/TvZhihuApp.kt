@@ -26,11 +26,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -95,11 +97,32 @@ fun TvZhihuApp(
         val destination = currentEntry?.destination
 
         val tabFocusRequesters = remember { TvTab.entries.associateWith { FocusRequester() } }
+        var pendingTabFocus by remember { mutableStateOf<TvTab?>(null) }
         val actionFocusRequesters = remember { mutableMapOf<String, FocusRequester>() }
+
+        // 切栏后内容与侧栏会重组，必须等新焦点项挂上 requester 再请求，否则会静默失败导致整个界面无焦点。
+        LaunchedEffect(pendingTabFocus) {
+            val tab = pendingTabFocus ?: return@LaunchedEffect
+            repeat(3) {
+                withFrameNanos { }
+                if (runCatching { tabFocusRequesters[tab]?.requestFocus() }.isSuccess) {
+                    pendingTabFocus = null
+                    return@LaunchedEffect
+                }
+            }
+            pendingTabFocus = null
+        }
 
         fun focusRequesterFor(id: String): FocusRequester = actionFocusRequesters.getOrPut(id) { FocusRequester() }
 
-        fun popToRoot(): Boolean = navController.popBackStack<TvRootRoute>(inclusive = false)
+        fun isAtRoot(): Boolean =
+            navController.currentDestination?.id == navController.graph.startDestinationId
+
+        fun popToRoot(): Boolean {
+            // 按 graph 的 startDestination id 回退，避免 typed route 查找失败后留下一个不在根页面的返回栈。
+            if (isAtRoot()) return true
+            return navController.popBackStack(navController.graph.startDestinationId, inclusive = false)
+        }
 
         fun openRoute(route: NavDestination) {
             popToRoot()
@@ -116,28 +139,32 @@ fun TvZhihuApp(
             popToRoot()
         }
 
-        fun handleAction(action: TvAction): Boolean = when (action) {
-            TvAction.Back -> {
-                navController.popBackStack()
-            }
+        fun handleAction(action: TvAction): Boolean {
+            return when (action) {
+                TvAction.Back -> {
+                    navController.popBackStack()
+                }
 
-            TvAction.Menu -> {
-                openSettings()
-                true
-            }
+                TvAction.Menu -> {
+                    openSettings()
+                    true
+                }
 
-            TvAction.PrevTab, TvAction.NextTab -> {
-                // 只在栏目根页面切栏，避免阅读中途误触把用户带回首页。
-                if (destination?.hasRoute<TvRootRoute>() != true) return false
-                val delta = if (action == TvAction.PrevTab) -1 else 1
-                val next = TvTab.entries[(selectedTab.ordinal + delta + TvTab.entries.size) % TvTab.entries.size]
-                selectTab(next)
-                tabFocusRequesters[next]?.requestFocus()
-                true
-            }
+                TvAction.PrevTab, TvAction.NextTab -> {
+                    // 只在栏目根页面切栏，避免阅读中途误触把用户带回首页。
+                    if (!isAtRoot()) return false
+                    // 手柄动作流可能持有较早的回调，这里从 state 重新取当前栏目，避免连续切栏只切一次。
+                    val currentTab = TvTab.entries.firstOrNull { it.name == selectedTabName } ?: TvTab.Home
+                    val delta = if (action == TvAction.PrevTab) -1 else 1
+                    val next = TvTab.entries[(currentTab.ordinal + delta + TvTab.entries.size) % TvTab.entries.size]
+                    selectTab(next)
+                    pendingTabFocus = next
+                    true
+                }
 
-            else -> {
-                false
+                else -> {
+                    false
+                }
             }
         }
 
@@ -155,7 +182,7 @@ fun TvZhihuApp(
                 ),
             ) {
                 Row(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    val onRoot = destination?.hasRoute<TvRootRoute>() == true
+                    val onRoot = destination?.id == navController.graph.startDestinationId
                     TvSideRail(
                         entries = buildList {
                             TvTab.entries.forEach { tab ->

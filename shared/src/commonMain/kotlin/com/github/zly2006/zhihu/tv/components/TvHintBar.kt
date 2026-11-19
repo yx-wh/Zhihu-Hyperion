@@ -65,8 +65,10 @@ fun TvAction.defaultKeyLabel(): String = when (this) {
     TvAction.Confirm -> "A"
     TvAction.Back -> "B"
     TvAction.Menu -> "☰"
-    TvAction.PrevTab -> "L"
-    TvAction.NextTab -> "R"
+    TvAction.PrevTab -> "L1"
+    TvAction.NextTab -> "R1"
+    TvAction.PreviousItem -> "L2"
+    TvAction.NextItem -> "R2"
     TvAction.Secondary -> "X"
 }
 

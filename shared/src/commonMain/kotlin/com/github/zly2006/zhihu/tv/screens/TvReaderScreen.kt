@@ -51,6 +51,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -227,13 +228,19 @@ private fun TvArticleReader(
     }
 
     TvReaderFrame(
-        hints = listOf(
-            TvHint(TvAction.Up, "滚动", key = "▲▼"),
-            TvHint(TvAction.Right, "操作", key = "▶"),
-            TvHint(TvAction.Confirm, "确定"),
-            TvHint(TvAction.Back, "返回"),
-        ),
+        hints = buildList {
+            add(TvHint(TvAction.Up, "滚动", key = "▲▼"))
+            add(TvHint(TvAction.Right, "操作", key = "▶"))
+            if (article.type == ArticleType.Answer) {
+                add(TvHint(TvAction.PreviousItem, "上一篇", key = "L2"))
+                add(TvHint(TvAction.NextItem, "下一篇", key = "R2"))
+            }
+            add(TvHint(TvAction.Confirm, "确定"))
+            add(TvHint(TvAction.Back, "返回"))
+        },
         actions = actions,
+        onPreviousItem = if (article.type == ArticleType.Answer) answerNavigation::navigateToPrevious else null,
+        onNextItem = if (article.type == ArticleType.Answer) answerNavigation::navigateToNext else null,
     ) { scrollState ->
         Text(
             text = viewModel.title.ifBlank { article.title },
@@ -309,6 +316,12 @@ private fun TvQuestionReader(
 
     val listState = rememberLazyListState()
     val firstAnswerRequester = remember { FocusRequester() }
+    val fallbackActionRequester = remember { FocusRequester() }
+    // 详情加载失败或没有回答时，列表没有焦点目标；先聚焦操作列，保证 B 仍能返回。
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        runCatching { fallbackActionRequester.requestFocus() }
+    }
     val useTiqian = settings.getBoolean(DUO3_TIQIAN_MARKDOWN_PREFERENCE_KEY, false)
     TvHints(
         TvHint(TvAction.Up, "移动"),
@@ -373,7 +386,7 @@ private fun TvQuestionReader(
                 TvReaderAction(AppIcons.Comment, "评论") { onOpenComments(question) },
                 TvReaderAction(AppIcons.Refresh, "刷新") { viewModel.refresh(environment) },
             ),
-            firstFocusRequester = null,
+            firstFocusRequester = fallbackActionRequester,
             bodyFocusRequester = firstAnswerRequester,
             modifier = Modifier.fillMaxHeight().width(96.dp),
         )
@@ -488,6 +501,8 @@ private fun TvPinReader(
 private fun TvReaderFrame(
     hints: List<TvHint>,
     actions: List<TvReaderAction>,
+    onPreviousItem: (() -> Unit)? = null,
+    onNextItem: (() -> Unit)? = null,
     content: @Composable (androidx.compose.foundation.ScrollState) -> Unit,
 ) {
     val scrollState = rememberScrollState()
@@ -499,6 +514,27 @@ private fun TvReaderFrame(
     val bodyFocused by bodyInteraction.collectIsFocusedAsState()
     val actionHost = LocalTvFocusedActionHost.current
     val scrollOwner = remember { Any() }
+    val contentOwner = remember { Any() }
+    val latestOnPreviousItem by rememberUpdatedState(onPreviousItem)
+    val latestOnNextItem by rememberUpdatedState(onNextItem)
+    DisposableEffect(actionHost, contentOwner) {
+        val dispose = actionHost.registerContentAction(contentOwner) { action ->
+            when (action) {
+                TvAction.PreviousItem -> latestOnPreviousItem?.let {
+                    it()
+                    true
+                } ?: false
+
+                TvAction.NextItem -> latestOnNextItem?.let {
+                    it()
+                    true
+                } ?: false
+
+                else -> false
+            }
+        }
+        onDispose(dispose)
+    }
     // 方向键先交给正文滚动，再考虑焦点移动；否则根节点会先把 Up/Down 当成焦点搜索消耗掉。
     DisposableEffect(bodyFocused, actionHost, scrollOwner) {
         if (!bodyFocused) return@DisposableEffect onDispose {}

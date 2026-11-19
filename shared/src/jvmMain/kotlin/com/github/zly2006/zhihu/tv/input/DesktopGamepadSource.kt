@@ -89,6 +89,7 @@ class DesktopGamepadSource : AutoCloseable {
         var connectedCount = -1
         // 每个手柄单独维护摇杆方向：共用一个变量时，另一只手柄居中会把状态清掉，导致按住摇杆时重复发动作。
         val stickDirections = mutableMapOf<Int, TvAction?>()
+        val triggerStates = mutableMapOf<Int, Pair<Boolean, Boolean>>()
         try {
             while (running.get()) {
                 manager.update()
@@ -108,8 +109,10 @@ class DesktopGamepadSource : AutoCloseable {
                     val id = controller.index
                     controller.dispatchButtonActions()
                     stickDirections[id] = controller.dispatchStickAction(stickDirections[id])
+                    triggerStates[id] = controller.dispatchTriggerActions(triggerStates[id] ?: (false to false))
                 }
                 stickDirections.keys.retainAll(activeIds)
+                triggerStates.keys.retainAll(activeIds)
                 Thread.sleep(POLL_INTERVAL_MS)
             }
         } catch (_: InterruptedException) {
@@ -148,6 +151,15 @@ class DesktopGamepadSource : AutoCloseable {
         }
         if (abs(x) < STICK_EXIT_THRESHOLD && abs(y) < STICK_EXIT_THRESHOLD) return null
         return current
+    }
+
+    /** L2 / R2 在 Jamepad 里是模拟轴；按 0.5 阈值做按下沿检测，返回 (左, 右) 状态供下一帧比较。 */
+    private fun ControllerIndex.dispatchTriggerActions(previous: Pair<Boolean, Boolean>): Pair<Boolean, Boolean> {
+        val left = runCatching { getAxisState(ControllerAxis.TRIGGERLEFT) }.getOrDefault(-1f) > 0.5f
+        val right = runCatching { getAxisState(ControllerAxis.TRIGGERRIGHT) }.getOrDefault(-1f) > 0.5f
+        if (left && !previous.first) mutableActions.tryEmit(TvAction.PreviousItem)
+        if (right && !previous.second) mutableActions.tryEmit(TvAction.NextItem)
+        return left to right
     }
 
     private fun ControllerIndex.readableName(): String =

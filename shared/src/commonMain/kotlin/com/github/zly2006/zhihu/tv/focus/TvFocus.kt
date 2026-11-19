@@ -89,6 +89,19 @@ private class TvFocusedActions(
 class TvFocusedActionHost {
     private var current: TvFocusedActions? = null
     private var scrollTarget: Pair<Any, (TvAction) -> Boolean>? = null
+    private var contentActionTarget: Pair<Any, (TvAction) -> Boolean>? = null
+
+    /** 阅读页登记 L2 / R2 的上一篇 / 下一篇；只有存在可切换内容时返回 true。 */
+    fun registerContentAction(
+        owner: Any,
+        onAction: (TvAction) -> Boolean,
+    ): () -> Unit {
+        val entry = owner to onAction
+        contentActionTarget = entry
+        return { if (contentActionTarget === entry) contentActionTarget = null }
+    }
+
+    fun performContentAction(action: TvAction): Boolean = contentActionTarget?.second?.invoke(action) == true
 
     /** 可滚动正文登记方向键处理，优先于焦点移动，避免方向键被根节点吞掉。 */
     fun registerScroll(
