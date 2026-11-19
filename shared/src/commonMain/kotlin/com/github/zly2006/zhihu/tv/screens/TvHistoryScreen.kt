@@ -59,11 +59,12 @@ fun TvHistoryScreen() {
         onLoadMore = {
             if (!viewModel.isLoading && !viewModel.isEnd) viewModel.loadMore(environment)
         },
-    ) { _, item, focusRequester ->
+    ) { _, item, focusRequester, onFocusChanged ->
         TvListRow(
             title = item.title,
             subtitle = listOfNotNull(item.authorName, item.details).joinToString(" · "),
             focusRequester = focusRequester,
+            onFocusChanged = onFocusChanged,
             onClick = { item.navDestination?.let { navigator.onNavigate(it) } },
         )
     }

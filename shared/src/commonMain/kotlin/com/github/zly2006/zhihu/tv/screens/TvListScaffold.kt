@@ -33,8 +33,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -47,6 +50,7 @@ import com.github.zly2006.zhihu.tv.components.TvHint
 import com.github.zly2006.zhihu.tv.components.TvHints
 import com.github.zly2006.zhihu.tv.focus.TvFocusable
 import com.github.zly2006.zhihu.tv.focus.tvFocusSurface
+import kotlinx.coroutines.flow.first
 
 private val listRowShape = RoundedCornerShape(16.dp)
 
@@ -64,18 +68,26 @@ fun <T> TvListScreen(
     hints: List<TvHint>,
     modifier: Modifier = Modifier,
     onLoadMore: (() -> Unit)? = null,
-    rowContent: @Composable (index: Int, item: T, focusRequester: FocusRequester?) -> Unit,
+    rowContent: @Composable (index: Int, item: T, focusRequester: FocusRequester?, onFocusChanged: (Boolean) -> Unit) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val firstItemRequester = remember { FocusRequester() }
+    val pendingFocusRequester = remember { FocusRequester() }
+    var pendingFocusIndex by remember { mutableStateOf<Int?>(null) }
+    var restoreFocusKey by rememberSaveable { mutableStateOf<String?>(null) }
     val latestOnLoadMore by rememberUpdatedState(onLoadMore)
 
     TvHints(hints)
     LaunchedEffect(items.isNotEmpty()) {
-        if (items.isNotEmpty()) {
-            withFrameNanos { }
-            runCatching { firstItemRequester.requestFocus() }
-        }
+        if (items.isEmpty()) return@LaunchedEffect
+        val target = restoreFocusKey
+            ?.let { key -> items.indexOfFirst { itemKey(it) == key } }
+            ?.takeIf { it >= 0 } ?: 0
+        listState.scrollToItem(target)
+        pendingFocusIndex = target
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.any { it.index == target } }.first { it }
+        withFrameNanos { }
+        runCatching { pendingFocusRequester.requestFocus() }
+        pendingFocusIndex = null
     }
     LaunchedEffect(listState) {
         snapshotFlow {
@@ -117,7 +129,12 @@ fun <T> TvListScreen(
                     .spacedBy(8.dp),
             ) {
                 itemsIndexed(items, key = { _, item -> itemKey(item) }) { index, item ->
-                    rowContent(index, item, if (index == 0) firstItemRequester else null)
+                    rowContent(
+                        index,
+                        item,
+                        if (index == pendingFocusIndex) pendingFocusRequester else null,
+                        { focused -> if (focused) restoreFocusKey = itemKey(item) },
+                    )
                 }
             }
         }
@@ -132,10 +149,12 @@ fun TvListRow(
     focusRequester: FocusRequester?,
     onClick: () -> Unit,
     trailing: String? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null,
 ) {
     TvFocusable(
         onClick = onClick,
         focusRequester = focusRequester,
+        onFocusChanged = onFocusChanged,
         shape = listRowShape,
         modifier = Modifier.fillMaxWidth(),
     ) { scope ->

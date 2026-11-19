@@ -87,7 +87,8 @@ class DesktopGamepadSource : AutoCloseable {
             return
         }
         var connectedCount = -1
-        var stickDirection: TvAction? = null
+        // 每个手柄单独维护摇杆方向：共用一个变量时，另一只手柄居中会把状态清掉，导致按住摇杆时重复发动作。
+        val stickDirections = mutableMapOf<Int, TvAction?>()
         try {
             while (running.get()) {
                 manager.update()
@@ -102,11 +103,13 @@ class DesktopGamepadSource : AutoCloseable {
                         if (controllers.isEmpty()) "手柄已断开" else "手柄已连接：${controllers.joinToString { it.readableName() }}",
                     )
                 }
+                val activeIds = controllers.mapTo(mutableSetOf()) { it.index }
                 controllers.forEach { controller ->
+                    val id = controller.index
                     controller.dispatchButtonActions()
-                    stickDirection = controller.dispatchStickAction(stickDirection)
+                    stickDirections[id] = controller.dispatchStickAction(stickDirections[id])
                 }
-                if (controllers.isEmpty()) stickDirection = null
+                stickDirections.keys.retainAll(activeIds)
                 Thread.sleep(POLL_INTERVAL_MS)
             }
         } catch (_: InterruptedException) {

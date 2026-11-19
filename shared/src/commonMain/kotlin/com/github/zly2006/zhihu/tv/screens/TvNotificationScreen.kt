@@ -58,7 +58,7 @@ fun TvNotificationScreen() {
         onLoadMore = {
             if (!viewModel.isLoading && !viewModel.isEnd) viewModel.loadMore(environment)
         },
-    ) { _, item, focusRequester ->
+    ) { _, item, focusRequester, onFocusChanged ->
         val text = item.content
             ?.text
             .orEmpty()
@@ -70,6 +70,7 @@ fun TvNotificationScreen() {
                 .joinToString(" · "),
             trailing = if (item.isRead) null else "未读",
             focusRequester = focusRequester,
+            onFocusChanged = onFocusChanged,
             onClick = {
                 val url = item.target?.url?.takeIf { it.isNotBlank() } ?: item.content?.targetLink
                 url?.let(::resolveContent)?.let { navigator.onNavigate(it) }

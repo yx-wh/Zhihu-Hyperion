@@ -56,13 +56,14 @@ fun TvCollectionContentScreen(collectionId: String) {
         onLoadMore = {
             if (!viewModel.isLoading && !viewModel.isEnd) viewModel.loadMore(environment)
         },
-    ) { _, item, focusRequester ->
+    ) { _, item, focusRequester, onFocusChanged ->
         val content = item.content
         TvListRow(
             title = content.title,
             subtitle = listOfNotNull(content.author?.name, content.description(), content.excerpt)
                 .joinToString(" · "),
             focusRequester = focusRequester,
+            onFocusChanged = onFocusChanged,
             onClick = { content.navDestination?.let { navigator.onNavigate(it) } },
         )
     }

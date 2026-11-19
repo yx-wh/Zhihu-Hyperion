@@ -374,6 +374,7 @@ private fun TvQuestionReader(
                 TvReaderAction(AppIcons.Refresh, "刷新") { viewModel.refresh(environment) },
             ),
             firstFocusRequester = null,
+            bodyFocusRequester = firstAnswerRequester,
             modifier = Modifier.fillMaxHeight().width(96.dp),
         )
     }
@@ -581,6 +582,7 @@ private fun TvReaderFrame(
         TvReaderActionColumn(
             actions = actions,
             firstFocusRequester = firstActionFocusRequester,
+            bodyFocusRequester = bodyFocusRequester,
             modifier = Modifier.fillMaxHeight().width(96.dp),
         )
     }
@@ -590,6 +592,7 @@ private fun TvReaderFrame(
 private fun TvReaderActionColumn(
     actions: List<TvReaderAction>,
     firstFocusRequester: FocusRequester?,
+    bodyFocusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(18.dp)
@@ -605,7 +608,16 @@ private fun TvReaderActionColumn(
                 onClick = action.onClick,
                 focusRequester = if (index == 0) firstFocusRequester else null,
                 shape = shape,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+                    .then(
+                        if (bodyFocusRequester != null) {
+                            Modifier.focusProperties { left = bodyFocusRequester }
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) { scope ->
                 Column(
                     modifier = Modifier

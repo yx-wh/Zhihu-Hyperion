@@ -32,10 +32,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
@@ -65,6 +69,11 @@ fun TvSettingsScreen(
     val version = rememberAppVersionInfo()
     val account = rememberAccountSettingsAccountState().value
     val fontSize = settings.getInt("contentFontSize", 100)
+    val firstRowRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        runCatching { firstRowRequester.requestFocus() }
+    }
 
     TvHints(
         TvHint(TvAction.Up, "移动"),
@@ -93,6 +102,7 @@ fun TvSettingsScreen(
                 TvSettingRow(
                     title = "账号",
                     value = if (account.login) account.username else "未登录",
+                    focusRequester = firstRowRequester,
                     onClick = { if (!account.login) onOpenLogin() },
                     // 只展示：未登录时点开登录由 onClick 处理，已登录时不响应。
                 )
@@ -141,9 +151,11 @@ private fun TvSettingRow(
     title: String,
     value: String,
     onClick: () -> Unit,
+    focusRequester: FocusRequester? = null,
 ) {
     TvFocusable(
         onClick = onClick,
+        focusRequester = focusRequester,
         shape = settingRowShape,
         modifier = Modifier.fillMaxWidth(),
     ) { scope ->

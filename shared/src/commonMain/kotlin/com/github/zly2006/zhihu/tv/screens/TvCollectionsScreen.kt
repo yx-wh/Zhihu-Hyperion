@@ -56,12 +56,13 @@ fun TvCollectionsScreen(urlToken: String) {
         onLoadMore = {
             if (!viewModel.isLoading && !viewModel.isEnd) viewModel.loadMore(environment)
         },
-    ) { _, collection, focusRequester ->
+    ) { _, collection, focusRequester, onFocusChanged ->
         TvListRow(
             title = collection.title,
             subtitle = collection.description,
             trailing = "${collection.itemCount} 条",
             focusRequester = focusRequester,
+            onFocusChanged = onFocusChanged,
             onClick = { navigator.onNavigate(CollectionContent(collectionId = collection.id)) },
         )
     }
