@@ -22,6 +22,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.tv.input.TvAction
 import com.github.zly2006.zhihu.tv.input.toTvActionOrNull
@@ -227,7 +229,10 @@ fun TvFocusable(
                 width = 3.dp,
                 color = if (focused) highlightColor else Color.Transparent,
                 shape = shape,
-            ).focusable(interactionSource = interactionSource)
+            ).pointerInput(onClick) {
+                // 电视/手柄模式也允许触控和鼠标点击；没有手柄时至少能点进设置退出。
+                detectTapGestures { onClick() }
+            }.focusable(interactionSource = interactionSource)
             .onKeyEvent { event ->
                 when (event.type) {
                     KeyEventType.KeyDown -> when (event.toTvActionOrNull()) {

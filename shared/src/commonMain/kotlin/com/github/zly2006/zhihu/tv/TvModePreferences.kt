@@ -27,6 +27,11 @@ import org.koin.compose.koinInject
 /** 手柄 / TV 模式开关；设置页写入，两个宿主读取，切换后立即换界面。 */
 const val TV_MODE_PREFERENCE_KEY = "tvMode"
 
+/** TV 模式独立的明暗主题；默认深色，不跟随普通界面的主题设置。 */
+const val TV_THEME_MODE_PREFERENCE_KEY = "tvThemeMode"
+const val TV_THEME_MODE_DARK = "dark"
+const val TV_THEME_MODE_LIGHT = "light"
+
 /**
  * 读取手柄 / TV 模式开关。
  *
@@ -41,4 +46,14 @@ fun rememberTvModeEnabled(): Boolean {
         getBoolean(TV_MODE_PREFERENCE_KEY, televisionUi)
     }
     return enabled
+}
+
+/** TV 模式是否使用深色主题；设置页切换后立即重组。 */
+@Composable
+fun rememberTvDarkTheme(): Boolean {
+    val settings = koinInject<SettingsStore>()
+    val mode by rememberObservedSetting(settings, TV_THEME_MODE_PREFERENCE_KEY) {
+        getString(TV_THEME_MODE_PREFERENCE_KEY, TV_THEME_MODE_DARK)
+    }
+    return mode != TV_THEME_MODE_LIGHT
 }

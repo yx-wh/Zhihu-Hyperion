@@ -89,7 +89,7 @@ fun TvZhihuApp(
     gamepadActions: Flow<TvAction>? = null,
     onExitTvMode: () -> Unit = {},
 ) {
-    ZhihuTheme(darkThemeOverride = true) {
+    ZhihuTheme(darkThemeOverride = rememberTvDarkTheme()) {
         val navController = rememberNavController()
         val inputState = rememberTvInputState()
         val hintState = rememberTvHintState()

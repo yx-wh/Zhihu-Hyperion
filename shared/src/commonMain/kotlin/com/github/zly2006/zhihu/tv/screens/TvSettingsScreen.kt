@@ -43,11 +43,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
+import com.github.zly2006.zhihu.tv.TV_THEME_MODE_DARK
+import com.github.zly2006.zhihu.tv.TV_THEME_MODE_LIGHT
+import com.github.zly2006.zhihu.tv.TV_THEME_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.tv.components.TvHint
 import com.github.zly2006.zhihu.tv.components.TvHints
 import com.github.zly2006.zhihu.tv.focus.TvFocusable
 import com.github.zly2006.zhihu.tv.focus.tvFocusSurface
 import com.github.zly2006.zhihu.tv.input.TvAction
+import com.github.zly2006.zhihu.tv.rememberTvDarkTheme
 import com.github.zly2006.zhihu.ui.rememberAccountSettingsAccountState
 import com.github.zly2006.zhihu.ui.rememberAppVersionInfo
 import org.koin.compose.koinInject
@@ -69,6 +73,7 @@ fun TvSettingsScreen(
     val version = rememberAppVersionInfo()
     val account = rememberAccountSettingsAccountState().value
     val fontSize = settings.getInt("contentFontSize", 100)
+    val darkTheme = rememberTvDarkTheme()
     val firstRowRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         withFrameNanos { }
@@ -105,6 +110,18 @@ fun TvSettingsScreen(
                     focusRequester = firstRowRequester,
                     onClick = { if (!account.login) onOpenLogin() },
                     // 只展示：未登录时点开登录由 onClick 处理，已登录时不响应。
+                )
+            }
+            item {
+                TvSettingRow(
+                    title = "主题",
+                    value = if (darkTheme) "暗色" else "亮色",
+                    onClick = {
+                        settings.putString(
+                            TV_THEME_MODE_PREFERENCE_KEY,
+                            if (darkTheme) TV_THEME_MODE_LIGHT else TV_THEME_MODE_DARK,
+                        )
+                    },
                 )
             }
             item {
