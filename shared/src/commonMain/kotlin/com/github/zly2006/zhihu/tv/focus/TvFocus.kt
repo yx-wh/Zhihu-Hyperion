@@ -232,8 +232,7 @@ fun TvFocusable(
             ).pointerInput(onClick) {
                 // 电视/手柄模式也允许触控和鼠标点击；没有手柄时至少能点进设置退出。
                 detectTapGestures { onClick() }
-            }.focusable(interactionSource = interactionSource)
-            .onKeyEvent { event ->
+            }.onKeyEvent { event ->
                 when (event.type) {
                     KeyEventType.KeyDown -> when (event.toTvActionOrNull()) {
                         TvAction.Confirm -> {
@@ -276,7 +275,7 @@ fun TvFocusable(
 
                     else -> false
                 }
-            },
+            }.focusable(interactionSource = interactionSource),
     ) {
         content(FocusedState(focused))
     }

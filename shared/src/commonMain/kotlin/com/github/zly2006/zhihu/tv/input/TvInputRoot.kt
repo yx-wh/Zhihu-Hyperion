@@ -118,6 +118,10 @@ fun TvInputRoot(
                     moveFocus(action)
                 } else if (action == TvAction.PreviousItem || action == TvAction.NextItem) {
                     performContentAction(action)
+                } else if (action == TvAction.Confirm) {
+                    focusedActionHost.performConfirm() || currentOnAction(action)
+                } else if (action == TvAction.Secondary) {
+                    focusedActionHost.performSecondary() || currentOnAction(action)
                 } else {
                     currentOnAction(action)
                 }

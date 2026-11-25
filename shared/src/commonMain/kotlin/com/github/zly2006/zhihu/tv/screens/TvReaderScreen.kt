@@ -228,6 +228,7 @@ private fun TvArticleReader(
     }
 
     TvReaderFrame(
+        focusKey = "${article.id}:${article.type}:${viewModel.content.isNotBlank()}",
         hints = buildList {
             add(TvHint(TvAction.Up, "滚动", key = "▲▼"))
             add(TvHint(TvAction.Right, "操作", key = "▶"))
@@ -324,6 +325,7 @@ private fun TvQuestionReader(
     val density = LocalDensity.current
     val actionHost = LocalTvFocusedActionHost.current
     val scrollOwner = remember { Any() }
+    val focusKey = "${question.questionId}:${detail != null}:${viewModel.displayItems.isNotEmpty()}"
     DisposableEffect(bodyFocused, actionHost) {
         if (!bodyFocused) return@DisposableEffect onDispose {}
         val step = with(density) { 150.dp.toPx() }
@@ -356,8 +358,8 @@ private fun TvQuestionReader(
         }
         onDispose(dispose)
     }
-    // 详情加载失败或没有回答时，先聚焦问题正文；这样长图可以滚动，B 也有焦点目标。
-    LaunchedEffect(Unit) {
+    // 详情/回答列表异步加载后正文节点会重建，必须按内容身份重新请求焦点，否则手柄会失去焦点目标。
+    LaunchedEffect(focusKey) {
         repeat(3) {
             withFrameNanos { }
             if (runCatching { bodyRequester.requestFocus() }.isSuccess) return@LaunchedEffect
@@ -508,6 +510,7 @@ private fun TvPinReader(
     }
 
     TvReaderFrame(
+        focusKey = "${pin.id}:${detail != null}",
         hints = listOf(
             TvHint(TvAction.Up, "滚动", key = "▲▼"),
             TvHint(TvAction.Right, "操作", key = "▶"),
@@ -545,6 +548,7 @@ private fun TvPinReader(
 private fun TvReaderFrame(
     hints: List<TvHint>,
     actions: List<TvReaderAction>,
+    focusKey: Any,
     onPreviousItem: (() -> Unit)? = null,
     onNextItem: (() -> Unit)? = null,
     content: @Composable (androidx.compose.foundation.ScrollState) -> Unit,
@@ -602,8 +606,8 @@ private fun TvReaderFrame(
         }
         onDispose(dispose)
     }
-    LaunchedEffect(Unit) {
-        // 等首帧完成组合，焦点目标挂上 FocusRequester 后再请求，否则会静默失败落到操作列。
+    LaunchedEffect(focusKey) {
+        // 内容异步加载完成后正文节点会重建，必须在内容身份变化时重新请求，否则焦点会掉到空处。
         withFrameNanos { }
         runCatching { bodyFocusRequester.requestFocus() }
     }
