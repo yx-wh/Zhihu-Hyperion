@@ -19,21 +19,27 @@ package com.github.zly2006.zhihu.tv.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.account.WebLoginPane
+import com.github.zly2006.zhihu.account.WebLoginScroll
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.tv.components.TvHint
 import com.github.zly2006.zhihu.tv.components.TvHints
+import com.github.zly2006.zhihu.tv.focus.LocalTvFocusedActionHost
 import com.github.zly2006.zhihu.tv.input.TvAction
 
 /**
@@ -45,30 +51,50 @@ import com.github.zly2006.zhihu.tv.input.TvAction
 @Composable
 fun TvLoginScreen() {
     val navigator = LocalNavigator.current
+    val actionHost = LocalTvFocusedActionHost.current
+    val scrollOwner = remember { Any() }
+    DisposableEffect(actionHost, scrollOwner) {
+        val step = 96
+        val dispose = actionHost.registerScroll(scrollOwner) { action ->
+            when (action) {
+                TvAction.Up -> WebLoginScroll.scrollBy?.invoke(0, -step) == true
+                TvAction.Down -> WebLoginScroll.scrollBy?.invoke(0, step) == true
+                TvAction.Left -> WebLoginScroll.scrollBy?.invoke(-step, 0) == true
+                TvAction.Right -> WebLoginScroll.scrollBy?.invoke(step, 0) == true
+                else -> false
+            }
+        }
+        onDispose(dispose)
+    }
     TvHints(TvHint(TvAction.Back, "返回"))
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(32.dp))
-        Text(
-            text = "网页登录",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "用手机知乎扫描页面中的二维码",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(20.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 40.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "网页登录",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Spacer(Modifier.width(16.dp))
+            Text(
+                text = "用手机知乎扫描页面中的二维码",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .widthIn(max = 900.dp),
+                .widthIn(max = 1100.dp),
         ) {
             WebLoginPane(onLoginSuccess = { navigator.onNavigateBack() })
         }

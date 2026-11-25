@@ -31,6 +31,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.ActionMode
 import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -114,6 +115,40 @@ class CustomWebView : WebView {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+
+    /** 非 null 时，方向键不再交给网页控件，而是按该像素步长滚动页面。 */
+    var directionKeyScrollStep: Int? = null
+
+    /** 文章 WebView 把滚动交给 Compose；登录等固定视口页面需要保留 WebView 自身滚动。 */
+    var allowNativeScroll: Boolean = false
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val step = directionKeyScrollStep
+        if (step != null && event.action == KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP -> {
+                    scrollBy(0, -step)
+                    return true
+                }
+
+                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    scrollBy(0, step)
+                    return true
+                }
+
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    scrollBy(-step, 0)
+                    return true
+                }
+
+                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    scrollBy(step, 0)
+                    return true
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     /**
      * Constructs a CustomWebView and prepare everything for displaying content, then call onLoad callback when ready.
@@ -217,6 +252,10 @@ class CustomWebView : WebView {
     }
 
     override fun scrollTo(x: Int, y: Int) {
+        if (allowNativeScroll) {
+            super.scrollTo(x, y)
+            return
+        }
         // 禁止 WebView 自己滚动，所有滚动都通过 scrollToHeightCallback 回调到 Compose 层处理
         super.scrollTo(0, 0)
     }
@@ -226,6 +265,7 @@ class CustomWebView : WebView {
      * 使 Compose 的 nestedScroll/overscroll 能接管所有的拖动。
      */
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+        if (allowNativeScroll) return super.onTouchEvent(event)
         parent?.requestDisallowInterceptTouchEvent(false)
         doubleTapDetector.onTouchEvent(event)
         if (event.actionMasked == android.view.MotionEvent.ACTION_MOVE) {
@@ -434,6 +474,7 @@ fun WebviewComp(
     scrollState: ScrollState? = null,
     existingWebView: CustomWebView? = null,
     onDoubleTap: (() -> Unit)? = null,
+    matchContentHeight: Boolean = true,
     onLoad: (CustomWebView) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -474,7 +515,7 @@ fun WebviewComp(
             view.onDoubleTapCallback = onDoubleTap
             onLoad(view)
         },
-        modifier = if (contentHeightDp > 0) {
+        modifier = if (matchContentHeight && contentHeightDp > 0) {
             modifier.height(contentHeightDp.dp)
         } else {
             modifier

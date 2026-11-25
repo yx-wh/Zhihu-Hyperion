@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import com.github.zly2006.zhihu.account.ZhihuAccountStore
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.tv.TV_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.tv.TV_THEME_MODE_DARK
@@ -70,6 +71,7 @@ fun TvSettingsScreen(
     onOpenLogin: () -> Unit,
 ) {
     val settings = koinInject<SettingsStore>()
+    val accountStore = koinInject<ZhihuAccountStore>()
     val version = rememberAppVersionInfo()
     val account = rememberAccountSettingsAccountState().value
     val fontSize = settings.getInt("contentFontSize", 100)
@@ -111,6 +113,15 @@ fun TvSettingsScreen(
                     onClick = { if (!account.login) onOpenLogin() },
                     // 只展示：未登录时点开登录由 onClick 处理，已登录时不响应。
                 )
+            }
+            if (account.login) {
+                item {
+                    TvSettingRow(
+                        title = "退出登录",
+                        value = "清除当前账号",
+                        onClick = { accountStore.clear() },
+                    )
+                }
             }
             item {
                 TvSettingRow(
