@@ -49,6 +49,9 @@ __pycache__/
 
 .worktrees
 
+# CodeBuddy workspace data
+.codebuddy/
+
 # Local secrets
 .secret/
 .log/
